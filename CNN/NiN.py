@@ -52,6 +52,7 @@ class NiN(nn.Module):
             nn.AdaptiveAvgPool2d((1,1)),
             nn.Flatten()
         )
+        self._initialize_weights()
 
     #定义一个NiN块
     def nin(self,in_channels,out_channels,kernel_size,strides,padding):
@@ -63,6 +64,15 @@ class NiN(nn.Module):
             nn.Conv2d(out_channels,out_channels,kernel_size=1),
             nn.ReLU()
         )
+
+    def _initialize_weights(self):
+        for m in self.modules():  # 遍历模型所有层
+              if isinstance(m, (nn.Linear, nn.Conv2d)):  # 对线性层和卷积层初始化
+                  nn.init.xavier_uniform_(m.weight)
+                  if m.bias is not None:  # 偏置初始化为0
+                       nn.init.constant_(m.bias, 0)
+
+
     def forward(self,x, print_layer_shape=False):
         if print_layer_shape:
             print(f"初始输入形状: {x.shape}")  # 打印输入尺寸
@@ -88,7 +98,7 @@ def data_training(net,train_loader,test_loader,epochs,lr,device):
     net=net.to(device)
     #损失函数，优化器
     loss=nn.CrossEntropyLoss()  #交叉熵损失函数
-    optimizer=torch.optim.SGD(net.parameters(),lr=lr,momentum=0.9)  #SGD优化器
+    optimizer=torch.optim.SGD(net.parameters(),lr=lr)  #SGD优化器
     # 记录损失
     train_losses = []
     test_losses = []
@@ -156,7 +166,7 @@ if __name__ == "__main__":
     # 超参数设置
     batchsize = 128
     epochs = 20
-    lr = 0.01
+    lr = 0.1
     # 读取数据集
     train_loader, test_loader = read_data(128, 224)
     #设备选择
